@@ -119,10 +119,10 @@ def VerificarNumeroRepetido(numero):
 
 # Procesar el csv de entrada
 with open(filename, newline='') as csvfile:
-    contador = 1
     spamreader = csv.reader(csvfile, delimiter=',')
     for row in spamreader:
-        contador = contador + 1
+        contador = driver.execute_script('return document.querySelector(".v-alert__content").innerText.match(/(\d+)/)[0]')
+        print("Intentos disponibles: " + contador)
         if (row[0] != 'PHONE_NUMBER'):
             if VerificarNumeroRepetido(numero=row[0]) == 1:
                 print("El numero: " + row[0] + " ya se encuentra validado")
@@ -130,7 +130,7 @@ with open(filename, newline='') as csvfile:
             else:
                 print("Procesando N. " + str(contador) + ": " + str(row[0]))
                 ProcesarNumero(row[0])
-            if (contador > 100):
+            if (contador == 0 or contador == "0"):
                 break
 
 # cerrar el navegador se puede comentar para mantenerlo abierto

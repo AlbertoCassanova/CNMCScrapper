@@ -34,9 +34,12 @@ def click(x,y):
 # Introducir el nombre del archivo, debe estar en formato .csv y estar en el mismo directorio que el script
 filename = input("Escriba el nombre del archivo .csv a procesar: ")
 
+PROXY = "101.255.166.241:8080"
+
 # configuracion de opciones de chrome -----> aca cambias el usuario para abrir una sesion ya iniciada
 chrome_options = Options()
-chrome_options.add_argument("user-data-dir=C:\\Users\\DTEL BackOffice\\AppData\\Local\\Google\\Chrome\\User Data")
+chrome_options.add_argument('--proxy-server=%s' % PROXY)
+chrome_options.add_argument("user-data-dir=C:\\Users\\Judah\\AppData\\Local\\Google\\Chrome\\User Data")
 chrome_options.add_argument("profile-directory=Default")
 
 # inicializar el driver de chrome

@@ -4,7 +4,7 @@ import time
 import urllib.request, json 
 import win32api, win32con
 from dotenv import load_dotenv
-from selenium import webdriver
+from seleniumwire import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
@@ -54,15 +54,35 @@ class EjecutarScript():
         chrome_options = Options()
         if (PROXY == "local"):
             chrome_options.add_argument("user-data-dir=" + USER_DIR)
+            chrome_options.add_argument("profile-directory=Default")
+            # inicializar el driver de chrome
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         else:
-            # Configure Proxy Option
-            chrome_options.add_argument(f'--proxy-server={PROXY}')
-            print("configurando proxy")
-            chrome_options.add_argument("user-data-dir=" + USER_DIR)
-        chrome_options.add_argument("profile-directory=Default")
 
-        # inicializar el driver de chrome
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+            proxy_username = "2bdd8ef305f5ccb8443a"
+            proxy_password = "828ce4751e15c0db"
+            proxy_address = "gw.dataimpulse.com"
+            proxy_port = "823"
+
+            proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}"
+
+            
+            # set selenium-wire options to use the proxy
+            seleniumwire_options = {
+                "proxy": {
+                    "http": proxy_url,
+                    "https": proxy_url
+                },
+            }
+
+
+            # Configure Proxy Option
+            print(" configurando proxy")
+            chrome_options.add_argument("user-data-dir=" + USER_DIR)
+            chrome_options.add_argument("profile-directory=Default")
+
+            # inicializar el driver de chrome
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options, seleniumwire_options=seleniumwire_options)
 
         # abrir la pagina
         self.driver.get("https://numeracionyoperadores.cnmc.es/portabilidad/movil")
@@ -167,12 +187,12 @@ with urllib.request.urlopen("https://api.proxyscrape.com/v4/free-proxy-list/get?
     
     # Recorrer un ciclo que itere los proxies disponibles para cambiarlos cuando sea necesario
     for intento in range(len(data['proxies'])):
-        if intento == 0:
+        if intento == -1:
             proxy: str = "local"
             print(" Intentando con IP local")
         else:
             proxy : str =  data['proxies'][intento]['ip'] + ":" + str(data['proxies'][intento]['port'])
-            print(" Intentando con proxy: " + proxy)
+            print(" Intentando con proxy")
         Scrapper.AbrirNavegador("89.117.130.19:80")
     
  

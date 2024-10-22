@@ -124,7 +124,7 @@ class EjecutarScript():
         self.driver.switch_to.frame(self.driver.find_element(By.XPATH, "//iframe[contains(@src, 'recaptcha')]"))
 
         # esperar y hacer clic en el checkbox del recaptcha
-        recaptcha_checkbox = WebDriverWait(self.driver, 10).until(
+        recaptcha_checkbox = WebDriverWait(self.driver, 20).until(
             EC.element_to_be_clickable((By.ID, "recaptcha-anchor"))
         )
         recaptcha_checkbox.click()
@@ -193,6 +193,6 @@ with urllib.request.urlopen("https://api.proxyscrape.com/v4/free-proxy-list/get?
         else:
             proxy : str =  data['proxies'][intento]['ip'] + ":" + str(data['proxies'][intento]['port'])
             print(" Intentando con proxy")
-        Scrapper.AbrirNavegador("89.117.130.19:80")
+        Scrapper.AbrirNavegador(proxy)
     
  

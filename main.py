@@ -1,12 +1,14 @@
 import csv
 import os
 import time
+import keyboard
 import urllib.request, json 
 import win32api, win32con
 from dotenv import load_dotenv
 from seleniumwire import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -15,6 +17,8 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver import ActionChains
+from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 
 # Cargar las variable de entorno
 load_dotenv()
@@ -55,6 +59,7 @@ class EjecutarScript():
         if (PROXY == "local"):
             chrome_options.add_argument("user-data-dir=" + USER_DIR)
             chrome_options.add_argument("profile-directory=Default")
+    
             # inicializar el driver de chrome
             self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         else:
@@ -63,32 +68,31 @@ class EjecutarScript():
             proxy_password = "828ce4751e15c0db"
             proxy_address = "gw.dataimpulse.com"
             proxy_port = "823"
-
             proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}"
-
-            
-            # set selenium-wire options to use the proxy
-            seleniumwire_options = {
-                "proxy": {
-                    "http": proxy_url,
-                    "https": proxy_url
-                },
-            }
-
 
             # Configure Proxy Option
             print(" configurando proxy")
             chrome_options.add_argument("user-data-dir=" + USER_DIR)
             chrome_options.add_argument("profile-directory=Default")
+            chrome_options.add_argument('--ignore-certificate-errors')
+            chrome_options.add_argument('--ignore-certificate-errors-spki-list')
+            chrome_options.add_argument('--ignore-ssl-errors')
+            chrome_options.set_capability('acceptInsecureCerts', "True")
+
+            proxy_helper = SeleniumAuthenticatedProxy(proxy_url=proxy_url)
+            proxy_helper.enrich_chrome_options(chrome_options)
 
             # inicializar el driver de chrome
-            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options, seleniumwire_options=seleniumwire_options)
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options,)
 
         # abrir la pagina
         self.driver.get("https://numeracionyoperadores.cnmc.es/portabilidad/movil")
+        time.sleep(5)
+        keyboard.press_and_release('enter')
+        keyboard.press_and_release('enter')
 
         # esperar a que la pagina se cargue
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "input-1")))
+        WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.ID, "input-1")))
 
         # Procesar el csv de entrada
         with open(filename, newline='') as csvfile:
@@ -101,12 +105,13 @@ class EjecutarScript():
                     if self.VerificarNumeroRepetido(numero=row[0]) == 1:
                         pass
                     else:
+
                         print("Procesando N. " + str(contador) + ": " + str(row[0]))
                         respuesta = self.ProcesarNumero(row[0])
                         if respuesta == "FAILED" :
                             intentos_fallidos = intentos_fallidos + 1
                             print("Intentos fallidos: " + str(intentos_fallidos))
-                        if  intentos_fallidos >= 5:
+                        if  intentos_fallidos >= 1:
                             self.driver.quit()
                             break
                     if (contador == 0 or contador == "0" or intentos_fallidos >= 10):
@@ -124,10 +129,16 @@ class EjecutarScript():
         self.driver.switch_to.frame(self.driver.find_element(By.XPATH, "//iframe[contains(@src, 'recaptcha')]"))
 
         # esperar y hacer clic en el checkbox del recaptcha
-        recaptcha_checkbox = WebDriverWait(self.driver, 20).until(
-            EC.element_to_be_clickable((By.ID, "recaptcha-anchor"))
-        )
-        recaptcha_checkbox.click()
+        try:
+            recaptcha_checkbox = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable((By.ID, "recaptcha-anchor"))
+            )
+            recaptcha_checkbox.click()
+        except TimeoutException:
+            print("El elemento no se ha encontrado")
+            self.driver.refresh()
+            time.sleep(5)
+            return "FAILED"
 
         # volver al contexto principal
         self.driver.switch_to.default_content()
@@ -187,7 +198,7 @@ with urllib.request.urlopen("https://api.proxyscrape.com/v4/free-proxy-list/get?
     
     # Recorrer un ciclo que itere los proxies disponibles para cambiarlos cuando sea necesario
     for intento in range(len(data['proxies'])):
-        if intento == -1:
+        if intento == 0:
             proxy: str = "local"
             print(" Intentando con IP local")
         else:

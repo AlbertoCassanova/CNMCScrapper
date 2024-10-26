@@ -1,0 +1,20 @@
+{
+  "name": "cnmcscrapper",
+  "version": "1.0.0",
+  "description": "1. Tener Python 3 instalado\r 2. Cambiar el directorio del perfil de chrome en la funcion ``chrome_options.add_argument()``",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.3",
+    "sequelize": "^6.37.5"
+  }
+}

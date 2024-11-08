@@ -4,8 +4,8 @@ import fs from 'fs'
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
 
-const sequelize = new Sequelize('', '', '', {
-    host: '',
+const sequelize = new Sequelize('lista_cnmc', 'roboto', 'dt3lp3ru24..', {
+    host: '66.206.4.234',
     dialect: 'mysql',
     logging:false,
     define: {
@@ -39,8 +39,9 @@ try {
 fs.readFile('./datos.csv', 'utf-8', async(err, file) => {
     const lines = file.split('\n')
     let project
-    let contador = 0
-    for (let line of lines)
+    let contador = 0;
+    let insercion = 0;
+    for (let line of lines) 
         if (!line.includes('NUMERO')) {
             project = await VicidialList.findOne({ where: { numero: line.split(',')[0]} });
             if (!project){
@@ -55,11 +56,13 @@ fs.readFile('./datos.csv', 'utf-8', async(err, file) => {
                     fecha = line.split(',')[3]
                 }
                 await VicidialList.create({ numero: numero, operador:operador, fecha_consulta: fecha });
-            }
-            else {
-                console.log(project.dataValues);
+                insercion++
+                console.log("Se ha registrado el numero: " + numero + '. ' + insercion + ' en total');
                 
             }
+            else {
+                console.log("El numero " + project.dataValues.numero + " ya se habia registrado");
+            }
         }        
-        //console.log(line.split(",").length)
-});
+    }
+);

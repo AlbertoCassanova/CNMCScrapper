@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
-from src.utils import click
+from src.utils import click, movimiento_aleatorio_hasta_click
 
 # Cargar las variable de entorno
 load_dotenv()
@@ -36,9 +36,12 @@ class EjecutarScript():
             chrome_options.add_argument("profile-directory=Default")
     
             # inicializar el driver de chrome
-            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+            try:
+                self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+            except SessionNotCreatedException:
+                print(" La sesion no se ha logrado crear, cierre todos los navegadores que se esten ejecutando")
         else:
-
+            print("TEST")
             proxy_username : str = "2bdd8ef305f5ccb8443a"
             proxy_password = "828ce4751e15c0db"
             proxy_address = "gw.dataimpulse.com"
@@ -49,6 +52,8 @@ class EjecutarScript():
             print(" Configurando proxy")
             chrome_options.add_argument("user-data-dir=" + USER_DIR)
             chrome_options.add_argument("profile-directory=Default")
+            #chrome_options.add_argument("--incognito")
+            chrome_options.add_argument("--disable-blink-features=AutomationControlled") 
             chrome_options.add_argument('--ignore-certificate-errors')
             chrome_options.add_argument('--ignore-certificate-errors-spki-list')
             chrome_options.add_argument('--ignore-ssl-errors')
@@ -70,9 +75,12 @@ class EjecutarScript():
         keyboard.press_and_release('enter')
 
         # esperar a que la pagina se cargue
+        
         try:
            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.ID, "input-1")))
         except TimeoutException:
+            return
+        except NoSuchElementException:
             return
 
         # Procesar el csv de entrada
@@ -89,7 +97,7 @@ class EjecutarScript():
                         print(" Procesando N. " + str(contador) + ": " + str(row[0]))
                         respuesta = self.ProcesarNumero(row[0])
                         if respuesta == "FAILED" :
-                            intentos_fallidos = intentos_fallidos + 1
+                            intentos_fallidos = intentos_fallidos + 5
                             print(" Intentos fallidos: " + str(intentos_fallidos))
                         if  intentos_fallidos >= 1:
                             self.driver.quit()
@@ -99,6 +107,7 @@ class EjecutarScript():
                         break
     
     def ProcesarNumero(self, numero) -> str:
+        movimiento_aleatorio_hasta_click(500, 400)
         campo_numero = self.driver.find_element(By.ID, "input-1")
         campo_numero.send_keys(numero)
 
@@ -144,7 +153,7 @@ class EjecutarScript():
 
             card = self.driver.execute_script("return document.querySelector('.v-card').innerText")
             if card != "No se ha validado el código captcha":
-                with open (self.output_file,'a') as file:
+                with open (self.output_file,'a', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow([lista[1], lista[3], lista[5]])
                     file.close()

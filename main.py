@@ -29,6 +29,6 @@ for intento in range(numeroLineas(filename) -1):
         proxy_local: bool = True
         print(" Intentando con IP local")
     else:
-        proxy_local : bool =  False
+        proxy_local : bool =  True
         print(" Intentando con proxy")
     Scrapper.AbrirNavegador(proxy_local)

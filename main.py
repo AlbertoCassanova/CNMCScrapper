@@ -1,6 +1,5 @@
 import csv
 import os
-import mysql.connector
 from src.utils import numeroLineas
 from src.scrapper import EjecutarScript
 
